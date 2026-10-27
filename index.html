@@ -1,183 +1,268 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Nurse Mobility & Legal Compliance Matrix Game</title>
+    <title>Global Nurse Mobility: Strategy Matrix Simulator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #1f2937; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+        /* Hexagon Matrix Nodes */
+        .hex-node {
+            clip-path: polygon(50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hex-node:hover {
+            transform: scale(1.15) translateY(-2px);
+            z-index: 20;
+        }
+
+        /* Ambient Pulsing Glow */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.7); }
+        }
+        .active-glow { animation: pulse-glow 2s infinite; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col overflow-x-hidden select-none">
 
-    <!-- Header / Top Bar -->
-    <header class="bg-slate-900 border-b border-slate-800 p-4 sticky top-0 z-50">
+    <!-- Top Navigation & Global Command Dashboard -->
+    <header class="bg-slate-900 border-b border-slate-800 p-4 sticky top-0 z-50 backdrop-blur-md bg-opacity-90">
         <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+            
+            <!-- Brand & Director Identity -->
             <div class="flex items-center gap-3">
-                <div class="bg-blue-600 p-2.5 rounded-xl shadow-lg shadow-blue-500/30">
-                    <i class="fa-solid me-1 fa-user-nurse text-xl text-white"></i>
+                <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-3 rounded-2xl shadow-lg shadow-blue-500/20 ring-1 ring-blue-400/30">
+                    <i class="fa-solid fa-earth-americas text-2xl text-white"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-lg text-white leading-tight">Global Mobility Matrix Game</h1>
-                    <p class="text-xs text-blue-400 font-medium">Akper Teungku Fakinah Banda Aceh - 100 Simulation Challenge</p>
+                    <h1 class="font-extrabold text-lg text-white tracking-tight flex items-center gap-2">
+                        GLOBAL MOBILITY MATRIX 
+                        <span class="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 font-semibold px-2 py-0.5 rounded-full uppercase">Director Sim</span>
+                    </h1>
+                    <p class="text-xs text-slate-400 font-medium">International Nurse Deployment & Legal Compliance HQ</p>
                 </div>
             </div>
 
-            <!-- Score & Stats Dashboard -->
-            <div class="flex items-center gap-6 bg-slate-950 px-5 py-2.5 rounded-2xl border border-slate-800">
-                <div class="text-center">
-                    <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Skor</p>
-                    <p id="score-display" class="text-xl font-extrabold text-amber-400">0</p>
+            <!-- Resource Management Stats Bar -->
+            <div class="flex items-center gap-3 md:gap-5 bg-slate-950/80 px-4 py-2 rounded-2xl border border-slate-800/80">
+                <!-- Ethics Shield -->
+                <div class="flex items-center gap-2" title="WHO Ethics & Fair Recruitment Shield">
+                    <i class="fa-solid fa-shield-halved text-emerald-400 text-sm"></i>
+                    <div>
+                        <p class="text-[9px] uppercase font-bold text-slate-400">Ethics</p>
+                        <div class="w-16 bg-slate-800 h-2 rounded-full overflow-hidden mt-0.5">
+                            <div id="ethics-bar" class="bg-emerald-500 h-full transition-all duration-500" style="width: 100%"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="h-8 w-px bg-slate-800"></div>
-                <div class="text-center">
-                    <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Akurasi / Persentase</p>
-                    <p id="percentage-display" class="text-xl font-extrabold text-emerald-400">0%</p>
+
+                <div class="h-6 w-px bg-slate-800"></div>
+
+                <!-- Legal Compliance -->
+                <div class="flex items-center gap-2" title="Contract & Immigration Compliance">
+                    <i class="fa-solid fa-gavel text-amber-400 text-sm"></i>
+                    <div>
+                        <p class="text-[9px] uppercase font-bold text-slate-400">Legal</p>
+                        <div class="w-16 bg-slate-800 h-2 rounded-full overflow-hidden mt-0.5">
+                            <div id="legal-bar" class="bg-amber-500 h-full transition-all duration-500" style="width: 100%"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="h-8 w-px bg-slate-800"></div>
-                <div class="text-center">
-                    <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Progress Scene</p>
-                    <p id="progress-display" class="text-xl font-extrabold text-blue-400">0 / 100</p>
+
+                <div class="h-6 w-px bg-slate-800"></div>
+
+                <!-- Credential Power -->
+                <div class="flex items-center gap-2" title="DataFlow & NCLEX Qualification Level">
+                    <i class="fa-solid fa-award text-indigo-400 text-sm"></i>
+                    <div>
+                        <p class="text-[9px] uppercase font-bold text-slate-400">Credentials</p>
+                        <div class="w-16 bg-slate-800 h-2 rounded-full overflow-hidden mt-0.5">
+                            <div id="credential-bar" class="bg-indigo-500 h-full transition-all duration-500" style="width: 100%"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            <!-- Score & Accuracy Metrics -->
+            <div class="flex items-center gap-4 bg-gradient-to-r from-blue-950/50 to-indigo-950/50 border border-blue-800/40 px-5 py-2 rounded-2xl">
+                <div class="text-right">
+                    <p class="text-[9px] uppercase font-extrabold text-blue-400 tracking-wider">Score Points</p>
+                    <p id="score-display" class="text-xl font-black text-white">0</p>
+                </div>
+                <div class="h-8 w-px bg-blue-800/40"></div>
+                <div class="text-right">
+                    <p class="text-[9px] uppercase font-extrabold text-emerald-400 tracking-wider">Accuracy</p>
+                    <p id="accuracy-display" class="text-xl font-black text-emerald-300">100%</p>
+                </div>
+            </div>
+
         </div>
     </header>
 
-    <!-- Main Game Area -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <!-- Main Game Layout -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        <!-- Sidebar / Matrix Grid Selector (100 Scenes) -->
-        <aside class="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col h-[750px]">
-            <div class="flex items-center justify-between mb-3">
-                <h2 class="font-bold text-slate-200 text-sm flex items-center gap-2">
-                    <i class="fa-solid fa-border-all text-blue-400"></i> Matriks 100 Scene
-                </h2>
-                <span class="text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded-full font-mono">Modul 1-4</span>
+        <!-- Left Column: 100 Hexagonal Strategy Matrix Grid (7 Cols) -->
+        <section class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-3xl p-5 flex flex-col justify-between shadow-2xl relative overflow-hidden backdrop-blur-sm">
+            
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-network-wired text-blue-400"></i>
+                    <h2 class="font-bold text-sm text-slate-200">100-Node Mobility Sector Map</h2>
+                </div>
+                <!-- Domain Legend Badges -->
+                <div class="flex items-center gap-2 text-[10px]">
+                    <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">WHO Ethics</span>
+                    <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Credentials</span>
+                    <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">Labour Law</span>
+                    <span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">TPPO Risk</span>
+                </div>
             </div>
 
-            <!-- 100 Grid Grid Container -->
-            <div id="matrix-grid" class="grid grid-cols-5 gap-1.5 overflow-y-auto custom-scrollbar flex-1 pr-1">
-                <!-- Buttons JS Generated -->
+            <!-- 100 Hexagonal Grid Map Container -->
+            <div class="overflow-auto custom-scrollbar p-2 max-h-[580px] flex justify-center">
+                <div id="hex-grid-container" class="grid grid-cols-10 gap-2 w-max min-w-[560px]">
+                    <!-- Generated via JavaScript -->
+                </div>
             </div>
 
-            <div class="mt-4 pt-3 border-t border-slate-800 text-xs text-slate-400 space-y-1">
-                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-emerald-600 inline-block"></span> Benar (+200 pts)</div>
-                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-rose-600 inline-block"></span> Keliru (-100 pts)</div>
-                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-blue-600 inline-block"></span> Scene Aktif</div>
-                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-slate-800 border border-slate-700 inline-block"></span> Belum Dicoba</div>
+            <!-- Footer Status Bar -->
+            <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                <div class="flex items-center gap-4">
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-500 ring-4 ring-blue-500/20 inline-block"></span> Active Node</span>
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span> Success (+200)</span>
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-rose-600 inline-block"></span> Violation (-100)</span>
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-slate-800 inline-block"></span> Pending</span>
+                </div>
+                <div class="font-mono text-[11px] text-blue-400">Progress: <span id="progress-text" class="font-bold text-white">0</span> / 100 Nodes</div>
             </div>
-        </aside>
+        </section>
 
-        <!-- Active Scene Simulator Card -->
-        <section class="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between relative overflow-hidden">
-            <!-- Background Glow FX -->
-            <div class="absolute -top-24 -right-24 w-72 h-72 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+        <!-- Right Column: Interactive Operation Command Console (5 Cols) -->
+        <section class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-3xl p-6 flex flex-col justify-between shadow-2xl relative">
+            
+            <!-- Ambient Background Glow -->
+            <div id="console-glow" class="absolute -top-20 -right-20 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl pointer-events-none transition-all duration-500"></div>
 
             <div>
-                <!-- Scene Header Info -->
-                <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-800">
+                <!-- Active Node Metadata Header -->
+                <div class="flex items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-800">
                     <div class="flex items-center gap-2">
-                        <span id="scene-badge" class="bg-blue-600/20 text-blue-400 border border-blue-500/30 text-xs font-bold px-3 py-1 rounded-lg">
-                            SCENE 1
+                        <span id="node-id-badge" class="bg-blue-600 text-white font-black text-xs px-3 py-1 rounded-lg tracking-wider">
+                            NODE #001
                         </span>
-                        <span id="module-badge" class="bg-slate-800 text-slate-300 text-xs font-semibold px-3 py-1 rounded-lg">
-                            Modul 1: WHO Ethics
+                        <span id="domain-badge" class="bg-slate-800 text-slate-300 text-xs font-semibold px-3 py-1 rounded-lg border border-slate-700">
+                            Domain 1: WHO Ethics
                         </span>
                     </div>
-                    <span id="category-tag" class="text-xs font-mono text-slate-500">
-                        Topic: Employer-Pays Principle
+                    <span id="node-type-tag" class="text-xs font-mono text-emerald-400 font-bold">
+                        [STRATEGIC CHOICE]
                     </span>
                 </div>
 
-                <!-- Case Scenario Text -->
-                <div class="mb-6">
-                    <h3 id="scene-title" class="text-xl font-bold text-white mb-3 leading-snug">
-                        Memuat Judul Simulasi...
+                <!-- Scenario Card -->
+                <div class="mb-5">
+                    <h3 id="scenario-title" class="text-lg font-bold text-white mb-2 leading-snug">
+                        Loading Strategic Operation...
                     </h3>
-                    <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 text-slate-300 text-sm leading-relaxed" id="scene-description">
-                        Deskripsi kasus akan ditampilkan di sini.
+                    <div id="scenario-description" class="bg-slate-950/90 border border-slate-800/80 rounded-2xl p-4 text-slate-300 text-xs md:text-sm leading-relaxed min-h-[100px] flex items-center shadow-inner">
+                        Select a node on the matrix map to inspect deployment challenges.
                     </div>
                 </div>
 
-                <!-- Decision Options -->
-                <div id="options-container" class="space-y-3 mb-6">
-                    <!-- Options JS Generated -->
+                <!-- Strategic Tactical Options -->
+                <div id="options-wrapper" class="space-y-3 mb-4">
+                    <!-- Options Generated Dynamically -->
                 </div>
             </div>
 
-            <!-- Feedback & Next Action Bar -->
+            <!-- Action Feedback & Audio Notification Box -->
             <div>
-                <div id="feedback-box" class="hidden p-4 rounded-xl mb-4 text-sm font-medium border flex items-start gap-3">
-                    <i id="feedback-icon" class="text-xl mt-0.5"></i>
-                    <div id="feedback-text" class="leading-relaxed"></div>
+                <div id="feedback-banner" class="hidden p-4 rounded-2xl mb-4 text-xs md:text-sm border transition-all duration-300">
+                    <div class="flex items-start gap-3">
+                        <div id="feedback-icon" class="text-xl mt-0.5"></div>
+                        <div>
+                            <h4 id="feedback-title" class="font-bold mb-1"></h4>
+                            <p id="feedback-body" class="leading-relaxed opacity-90"></p>
+                        </div>
+                    </div>
                 </div>
 
+                <!-- Control Buttons -->
                 <div class="flex items-center justify-between pt-4 border-t border-slate-800">
-                    <button id="prev-btn" onclick="navigateScene(-1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl text-sm font-semibold transition disabled:opacity-40">
-                        <i class="fa-solid fa-arrow-left me-1"></i> Sebelum
+                    <button id="btn-prev" onclick="navigateNode(-1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2.5 rounded-xl text-xs font-bold transition disabled:opacity-30 disabled:hover:bg-slate-800">
+                        <i class="fa-solid fa-chevron-left me-1"></i> Prev Node
                     </button>
 
-                    <div class="text-xs text-slate-500 font-mono">
-                        Poin: Keliru (-100) | Kesuksesan (+200)
-                    </div>
+                    <button id="btn-auto-scan" onclick="jumpToNextPending()" class="bg-slate-800/80 hover:bg-slate-700 text-blue-400 border border-blue-500/20 px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-radar text-blue-400 animate-pulse"></i> Auto-Scan Next
+                    </button>
 
-                    <button id="next-btn" onclick="navigateScene(1)" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-blue-600/30 transition disabled:opacity-40">
-                        Berikut <i class="fa-solid fa-arrow-right ms-1"></i>
+                    <button id="btn-next" onclick="navigateNode(1)" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-blue-600/30 transition disabled:opacity-30">
+                        Next Node <i class="fa-solid fa-chevron-right ms-1"></i>
                     </button>
                 </div>
             </div>
 
         </section>
-
     </main>
 
-    <!-- Audio FX Engine using Web Audio API -->
+    <!-- Web Audio API Sound Generator -->
     <script>
-        // Web Audio API Sound Generator
-        const AudioFX = {
+        const SoundEngine = {
             ctx: null,
 
             init() {
                 if (!this.ctx) {
-                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
                 }
             },
 
-            playSuccess() {
+            // Uplifting CELEBRATION Fanfare sound for success (+200 pts)
+            playCelebration() {
                 this.init();
-                const now = this.ctx.currentTime;
+                if (this.ctx.state === 'suspended') this.ctx.resume();
                 
-                // Arpeggio Celebration Sound (C Major)
+                const now = this.ctx.currentTime;
                 const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-                notes.forEach((freq, index) => {
+                
+                notes.forEach((freq, idx) => {
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
-                    
+
                     osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(freq, now + (index * 0.08));
-                    
-                    gain.gain.setValueAtTime(0.15, now + (index * 0.08));
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + (index * 0.08) + 0.3);
-                    
+                    osc.frequency.setValueAtTime(freq, now + (idx * 0.07));
+
+                    gain.gain.setValueAtTime(0, now + (idx * 0.07));
+                    gain.gain.linearRampToValueAtTime(0.2, now + (idx * 0.07) + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + (idx * 0.07) + 0.35);
+
                     osc.connect(gain);
                     gain.connect(this.ctx.destination);
-                    
-                    osc.start(now + (index * 0.08));
-                    osc.stop(now + (index * 0.08) + 0.3);
+
+                    osc.start(now + (idx * 0.07));
+                    osc.stop(now + (idx * 0.07) + 0.35);
                 });
             },
 
+            // Punchy BAD/BAM sound for penalty/risky choices (-100 pts)
             playBadBAM() {
                 this.init();
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+
                 const now = this.ctx.currentTime;
                 
-                // Harsh "BAM" Dissonant Sound
+                // Dissonant low frequency oscillators
                 const osc1 = this.ctx.createOscillator();
                 const osc2 = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
@@ -185,13 +270,14 @@
                 osc1.type = 'sawtooth';
                 osc2.type = 'square';
 
-                osc1.frequency.setValueAtTime(130.81, now); // C3
-                osc1.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+                // Pitch drop for heavy impact
+                osc1.frequency.setValueAtTime(145, now);
+                osc1.frequency.exponentialRampToValueAtTime(35, now + 0.28);
 
-                osc2.frequency.setValueAtTime(138.59, now); // C#3 (Dissonant)
-                osc2.frequency.exponentialRampToValueAtTime(35, now + 0.3);
+                osc2.frequency.setValueAtTime(154.3, now); // Minor second interval mismatch
+                osc2.frequency.exponentialRampToValueAtTime(38, now + 0.28);
 
-                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.setValueAtTime(0.35, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
 
                 osc1.connect(gain);
@@ -206,452 +292,405 @@
         };
     </script>
 
-    <!-- Game Logic & 100 Scenes Generator -->
+    <!-- Game Logic & 100 Matrix Nodes Engine -->
     <script>
-        // Generate 100 Comprehensive Matrix Scenes from Module
-        const totalScenesCount = 100;
-        let currentSceneIndex = 0;
-        let userAnswers = new Array(totalScenesCount).fill(null); // stores { chosen, scoreDelta, isCorrect }
+        const TOTAL_NODES = 100;
+        let activeNodeIndex = 0;
         let score = 0;
+        let completedCount = 0;
 
-        // Generator Template Data to construct 100 Realistic Scenarios based on Modul 1 - 4
-        const moduleTitles = [
-            "Modul 1: WHO Ethics & Global Framework",
-            "Modul 2: Credentialing, Licensing & Scope",
-            "Modul 3: Labour Laws, Contracts & Visa",
-            "Modul 4: Risk Mitigation, Safety & TPPO"
+        // Resources state (0 - 100%)
+        let resources = {
+            ethics: 100,
+            legal: 100,
+            credential: 100
+        };
+
+        // Node answers storage: null or { chosenOpt: number, isCorrect: boolean, delta: number }
+        const nodeRecords = new Array(TOTAL_NODES).fill(null);
+
+        // Domain Metadata Configuration
+        const DOMAINS = [
+            { id: 1, title: "WHO Ethics & Placement", color: "emerald", bg: "bg-emerald-500/20", border: "border-emerald-500/30", text: "text-emerald-400" },
+            { id: 2, title: "Credentialing & Licensing", color: "indigo", bg: "bg-indigo-500/20", border: "border-indigo-500/30", text: "text-indigo-400" },
+            { id: 3, title: "Labour Laws & Contract Audit", color: "amber", bg: "bg-amber-500/20", border: "border-amber-500/30", text: "text-amber-400" },
+            { id: 4, title: "Safety, Whistleblowing & TPPO", color: "rose", bg: "bg-rose-500/20", border: "border-rose-500/30", text: "text-rose-400" }
         ];
 
-        // 100 Core Questions Seed Matrix
-        const matrixBank = [];
-        
-        for(let i = 1; i <= 100; i++) {
-            let modId = Math.floor((i-1) / 25);
-            let modTitle = moduleTitles[modId];
-            let title = "", desc = "", options = [], correct = 0, explanation = "", category = "";
+        // 100 Node Strategy Scenarios Generator
+        const matrixNodes = [];
 
-            if(modId === 0) {
-                // Modul 1: Foundations & WHO (1-25)
-                category = "WHO Ethics & Placement Schemes";
-                if (i % 5 === 1) {
-                    title = `Scene ${i}: Tagihan Biaya Visa & Tiket oleh Agensi`;
-                    desc = `Sebuah agensi P2P meminta uang muka Rp 15.000.000 untuk tiket dan visa, berjanji mengembalikannya dalam 6 bulan. Bagaimana keputusan Anda?`;
-                    options = [
-                        "Tolak total, karena melanggar Employer-Pays Principle (WHO Code & ILO).",
-                        "Bayar saja dulu agar proses visa tidak terhambat.",
-                        "Pinjam uang ke bank agensi dengan bunga ringan."
-                    ];
-                    correct = 0;
-                    explanation = "Sesuai Employer-Pays Principle (WHO Code), seluruh biaya rekrutmen, visa, dan penerbangan WAJIB ditanggung penuh oleh pemberi kerja (employer).";
-                } else if (i % 5 === 2) {
-                    title = `Scene ${i}: Rekrutmen Aktif dari Negara Daftar Merah WHO`;
-                    desc = `RS tempat Anda bekerja berencana merekrut perawat secara agresif dari negara Afrika yang masuk WHO Health Workforce Support & Safeguards List.`;
-                    options = [
-                        "Mendukung karena kebutuhan tenaga kerja sangat mendesak.",
-                        "Mengingatkan RS bahwa rekrutmen aktif di negara Red-List dilarang oleh WHO untuk cegah Brain Drain.",
-                        "Diam saja karena itu urusan manajemen SDM."
-                    ];
-                    correct = 1;
-                    explanation = "WHO Red-List melarang rekrutmen aktif dari negara berkrisis tenaga kesehatan demi menjaga ketahanan kesehatan nasional negara asal.";
-                } else if (i % 5 === 3) {
-                    title = `Scene ${i}: Diskriminasi Gaji Pokok Perawat Migran`;
-                    desc = `Kontrak Anda menunjukkan gaji 30% lebih rendah dibanding perawat lokal pada NHS Band 5 dengan dalih 'masa penyesuaian matrikulasi'.`;
-                    options = [
-                        "Menerima karena status perawat migran memang kelas dua.",
-                        "Menuntut Equal Treatment Principle karena kualifikasi profesi dan jobdesk setara.",
-                        "Mengundurkan diri tanpa memberitahu siapapun."
-                    ];
-                    correct = 1;
-                    explanation = "Equal Treatment Principle menuntut perawat migran yang terkualifikasi menerima standar gaji dan tunjangan yang sama persis dengan perawat lokal.";
-                } else if (i % 5 === 4) {
-                    title = `Scene ${i}: Verifikasi Legalitas P3MI Penempatan`;
-                    desc = `Sebelum menandatangani perjanjian penempatan P2P, langkah validasi utama yang wajib dilakukan adalah:`;
-                    options = [
-                        "Meminta janji lisan dari pemilik kantor agensi.",
-                        "Mengecek status izin resmi P3MI dan Perjanjian Penempatan di portal SISKOP2MI / BP2MI.",
-                        "Langsung membeli seragam RS tujuan secara mandiri."
-                    ];
-                    correct = 1;
-                    explanation = "Validasi melalui portal resmi BP2MI/SISKOP2MI wajib dilakukan untuk memastikan P3MI tidak terhalang sanksi atau berstatus ilegal.";
-                } else {
-                    title = `Scene ${i}: Pemilihan Jalur Penempatan G2G vs P2P`;
-                    desc = `Anda menginginkan jaminan pelindungan hukum bilateral tertinggi dengan tingkat risiko penipuan mendekati 0%. Skema apa yang dipilih?`;
-                    options = [
-                        "Government-to-Government (G2G) seperti Triple Win atau IJEPA.",
-                        "Direct Hiring tanpa melalui portal pemerintah.",
-                        "Skema Visa Turis lalu mencari kerja secara meraba-raba."
-                    ];
-                    correct = 0;
-                    explanation = "Skema G2G didasari MoU resmi antar-pemerintah dengan pengawasan ketat dan transparansi biaya penuh.";
+        function generate100Nodes() {
+            const templates = [
+                // Domain 1: WHO Ethics & Placement (1 - 25)
+                {
+                    domain: 0,
+                    title: "Placement Agency Fee Invoice Audit",
+                    desc: "A third-party recruiting partner requests an upfront $1,200 administrative fee from candidate nurses for flights and visa processing.",
+                    options: [
+                        { text: "Reject the charge entirely. Enforce the Employer-Pays Principle under WHO Code and ILO standards.", correct: true, impact: { ethics: 5, legal: 5 } },
+                        { text: "Approve the fee under a deferred salary deduction agreement.", correct: false, impact: { ethics: -15, legal: -10 } },
+                        { text: "Split the cost 50/50 between candidate and hospital.", correct: false, impact: { ethics: -10, legal: -5 } }
+                    ],
+                    rationale: "The WHO Code of Practice & ILO Migration Standards mandate that recruitment, visa, and placement expenses must be borne 100% by employers."
+                },
+                {
+                    domain: 0,
+                    title: "WHO Red-List Active Recruitment Crisis",
+                    desc: "Hospital HR requests active target recruitment from a critical-shortage nation listed on the WHO Health Workforce Support & Safeguards List.",
+                    options: [
+                        { text: "Authorize active marketing drives to fill immediate ICU vacancies.", correct: false, impact: { ethics: -20, legal: -10 } },
+                        { text: "Halt active recruitment; transition strictly to government-approved G2G bilateral frameworks.", correct: true, impact: { ethics: 10, legal: 5 } },
+                        { text: "Recruit via unverified sub-agents to bypass regional oversight.", correct: false, impact: { ethics: -25, legal: -20 } }
+                    ],
+                    rationale: "Active recruitment from WHO Red-List nations causes severe brain drain in vulnerable health systems and violates international ethical guidelines."
+                },
+                {
+                    domain: 0,
+                    title: "Equal Remuneration Parity Audit",
+                    desc: "An overseas NHS Band 5 contract offers international nurses 25% lower baseline pay than local peers during 'orientation months'.",
+                    options: [
+                        { text: "Accept the reduced wage as standard onboarding cost.", correct: false, impact: { ethics: -15, legal: -15 } },
+                        { text: "Demand immediate salary parity based on equal qualification and job specification.", correct: true, impact: { ethics: 10, legal: 10 } },
+                        { text: "Offer non-monetary housing vouchers instead of matching wage scale.", correct: false, impact: { ethics: -5, legal: -5 } }
+                    ],
+                    rationale: "The Equal Treatment Principle mandates equal pay for equal work regardless of national origin or migration status."
+                },
+
+                // Domain 2: Credentialing & Licensing (26 - 50)
+                {
+                    domain: 1,
+                    title: "DataFlow PSV Name Discrepancy",
+                    desc: "Primary Source Verification (DataFlow) fails because the candidate's degree diploma carries a middle title absent from their official passport.",
+                    options: [
+                        { text: "Submit an official Institutional Name Discrepancy Affidavit issued by the university registrar.", correct: true, impact: { credential: 10, legal: 5 } },
+                        { text: "Edit the scanned digital passport to match the university diploma.", correct: false, impact: { credential: -30, legal: -30 } },
+                        { text: "Cancel the candidate's licensing profile and re-register under a new name.", correct: false, impact: { credential: -15, legal: -10 } }
+                    ],
+                    rationale: "Official affidavits signed by issuing authorities are the legal protocol for clearing identity discrepancies in global PSV audits."
+                },
+                {
+                    domain: 1,
+                    title: "Clinical Hours Conversion Gap",
+                    desc: "A foreign nursing board requires 204 clinical clock-hours in Medical-Surgical care. The transcript shows 4 academic credit points.",
+                    options: [
+                        { text: "Calculate conversion using 1 Credit = 51 Clinical Hours (4 x 51 = 204 hrs) and attach syllabus evidence.", correct: true, impact: { credential: 10, ethics: 5 } },
+                        { text: "Artificially inflate credit points on the official evaluation summary.", correct: false, impact: { credential: -25, legal: -25 } },
+                        { text: "Ignore the gap and submit without conversion documentation.", correct: false, impact: { credential: -10, legal: -5 } }
+                    ],
+                    rationale: "Standard international credential evaluation uses 1 Clinical Credit = 51 Clock Hours to establish equivalence."
+                },
+                {
+                    domain: 1,
+                    title: "Unsafe Verbal Prescription Directive",
+                    desc: "During night shift, a attending physician demands over phone to double a vasopressor dose without entering an electronic order.",
+                    options: [
+                        { text: "Administer immediately to avoid conflict with the attending physician.", correct: false, impact: { credential: -20, legal: -20 } },
+                        { text: "Execute SBAR protocol, request written/electronic order, and verify patient safety thresholds before administration.", correct: true, impact: { credential: 10, ethics: 10 } },
+                        { text: "Half the dose independently without logging the communication.", correct: false, impact: { credential: -15, legal: -15 } }
+                    ],
+                    rationale: "Unsafe orders violate scope of practice. SBAR and read-back written verification protect patient safety and mitigate malpractice risk."
+                },
+
+                // Domain 3: Labour Laws & Contract Audit (51 - 75)
+                {
+                    domain: 2,
+                    title: "Predatory Clawback Clause Audit",
+                    desc: "A candidate contract specifies a flat $15,000 liquid penalty for early resignation, regardless of elapsed service months.",
+                    options: [
+                        { text: "Enforce contract as signed; penalties ensure staff retention.", correct: false, impact: { legal: -20, ethics: -20 } },
+                        { text: "Negotiate an addendum replacing flat fees with amortized pro-rata actual training cost recovery.", correct: true, impact: { legal: 10, ethics: 10 } },
+                        { text: "Ignore the clause and advise nurses to break contract freely.", correct: false, impact: { legal: -15, credential: -10 } }
+                    ],
+                    rationale: "Flat un-amortized penalty clauses constitute predatory debt bondage under international labour oversight."
+                },
+                {
+                    domain: 2,
+                    title: "Passport Retention Mandate",
+                    desc: "An overseas facility HR demands physical possession of original passports for 'safekeeping and administrative filing'.",
+                    options: [
+                        { text: "Surrender passports to maintain positive facility relations.", correct: false, impact: { legal: -25, ethics: -20 } },
+                        { text: "Refuse retention, citing Kafala Reform laws and ILO Forced Labour Indicators; provide certified copies only.", correct: true, impact: { legal: 10, ethics: 15 } },
+                        { text: "Charge nurses a monthly storage fee to keep passports in a facility safe.", correct: false, impact: { legal: -30, ethics: -25 } }
+                    ],
+                    rationale: "Employer retention of identity documents is illegal worldwide and is a primary indicator of forced labour."
+                },
+                {
+                    domain: 2,
+                    title: "Visa Sponsorship Curtailment Window",
+                    desc: "A nurse is wrongfully terminated during facility restructuring. The host immigration authority grants 60 days to secure new sponsorship.",
+                    options: [
+                        { text: "Immediate deportation without grace period extension.", correct: false, impact: { legal: -15, ethics: -10 } },
+                        { text: "Activate legal transition protocol to secure a secondary licensed sponsor within the 60-day curtailment window.", correct: true, impact: { legal: 10, ethics: 10 } },
+                        { text: "Advise the nurse to remain in country illegally under visitor status.", correct: false, impact: { legal: -30, credential: -20 } }
+                    ],
+                    rationale: "Navigating the official curtailment window protects immigration status and prevents unauthorized stay penalties."
+                },
+
+                // Domain 4: Safety, Whistleblowing & TPPO (76 - 100)
+                {
+                    domain: 3,
+                    title: "Whistleblowing Channel Activation",
+                    desc: "Systemic falsification of patient nurse-to-patient safety ratios is detected in a clinical unit.",
+                    options: [
+                        { text: "Leak unverified internal patient files to public social media platforms.", correct: false, impact: { legal: -20, credential: -15 } },
+                        { text: "File a protected report through the official Freedom to Speak Up Guardian / Ethics Officer hotline.", correct: true, impact: { ethics: 15, legal: 10 } },
+                        { text: "Conceal the report to protect facility accreditation ratings.", correct: false, impact: { ethics: -30, legal: -25 } }
+                    ],
+                    rationale: "Protected whistleblowing channels safeguard patient care while shielding reporting nurses from illegal employer retaliation."
+                },
+                {
+                    domain: 3,
+                    title: "TPPO Indicator Detection",
+                    desc: "A group of recruited nurses report restricted movement, confiscated phones, and unrecorded wage deductions for housing.",
+                    options: [
+                        { text: "Treat as internal housing dispute and advise private resolution.", correct: false, impact: { ethics: -25, legal: -25 } },
+                        { text: "Trigger emergency consular protection protocols and alert Human Trafficking Taskforce authorities.", correct: true, impact: { ethics: 20, legal: 15 } },
+                        { text: "Terminate the nurses' contracts to eliminate liability.", correct: false, impact: { ethics: -35, legal: -30 } }
+                    ],
+                    rationale: "Restricted movement and document confiscation are severe indicators of Human Trafficking/Forced Labour requiring state intervention."
+                },
+                {
+                    domain: 3,
+                    title: "Consular Emergency Assistance (SPLP)",
+                    desc: "A nurse's travel documents are destroyed in a crisis zone. Emergency repatriation is required immediately.",
+                    options: [
+                        { text: "Request the Embassy issue an Emergency Travel Document (SPLP) for safe consular evacuation.", correct: true, impact: { legal: 15, ethics: 10 } },
+                        { text: "Attempt border crossing without official travel credentials.", correct: false, impact: { legal: -30, ethics: -15 } },
+                        { text: "Wait indefinitely until standard passport renewal completes.", correct: false, impact: { legal: -10, ethics: -10 } }
+                    ],
+                    rationale: "SPLP (Emergency Travel Pass) is the official diplomatic mechanism for urgent repatriation when passports are lost or destroyed."
                 }
-            } else if(modId === 1) {
-                // Modul 2: Credentialing, Licensing & Scope (26-50)
-                category = "Credentialing, Licensing & Malpractice";
-                if (i % 5 === 1) {
-                    title = `Scene ${i}: Mitigasi Beda Nama pada Primary Source Verification (PSV)`;
-                    desc = `Proses DataFlow Anda terkendala karena nama di Ijazah memakai gelar (S.Kep) sedangkan Paspor tidak. Tindakan Anda:`;
-                    options = [
-                        "Mengubah tulisan nama di Paspor sendiri.",
-                        "Melampirkan Surat Keterangan Beda Nama resmi dari kampus penerbit ijazah.",
-                        "Membatalkan seluruh aplikasi lisensi internasional."
-                    ];
-                    correct = 1;
-                    explanation = "Surat Keterangan Beda Nama resmi dari instansi penerbit adalah syarat validasi legal untuk mengatasi discrepancy pada audit PSV DataFlow/CGFNS.";
-                } else if (i % 5 === 2) {
-                    title = `Scene ${i}: Perhitungan Gap Analysis Transkrip Klinik`;
-                    desc = `Transkrip Anda memiliki 4 SKS Praktik Klinik KMB. Berapakah konversi Clock Hours resmi yang dihitung oleh lembaga kredensial?`;
-                    options = [
-                        "100 Clock Hours",
-                        "204 Clock Hours (4 SKS x 51 Jam)",
-                        "400 Clock Hours"
-                    ];
-                    correct = 1;
-                    explanation = "Rumus konversi internasional: 1 SKS Praktik Klinik = 51 Clock Hours (17 minggu x 3 jam/minggu). Jadi 4 SKS = 204 Clock Hours.";
-                } else if (i % 5 === 3) {
-                    title = `Scene ${i}: Instruksi Verbal Dosis Tinggi (Unsafe Order)`;
-                    desc = `Dokter menyuruh secara verbal per telepon untuk menaikkan Dopamine 2x lipat tanpa mau menulis instruksi di rekam medis. Tindakan Anda:`;
-                    options = [
-                        "Tahan obat, lakukan komunikasi SBAR, dan minta instruksi tertulis/ditandatangani demi Patient Safety.",
-                        "Langsung menyuntikkan obat karena takut dimarahi dokter.",
-                        "Mengurangi dosis sendiri menjadi separuhnya tanpa konfirmasi."
-                    ];
-                    correct = 0;
-                    explanation = "Perawat berhak dan wajib menolak Unsafe Order tanpa instruksi tertulis untuk mencegah malpraktik (Breach of Duty). Gunakan metode SBAR & Read-Back.";
-                } else if (i % 5 === 4) {
-                    title = `Scene ${i}: Ujian NCLEX-RN NGN & Decision Making`;
-                    desc = `Next Generation NCLEX (NGN) menguji kompetensi perawat luar negeri dengan fokus utama pada model:`;
-                    options = [
-                        "Hafalan teori rumus kimia obat.",
-                        "Clinical Judgment Measurement Model (NCJMM) untuk keselamatan pasien.",
-                        "Kecepatan pengetikan laporan administrasi medis."
-                    ];
-                    correct = 1;
-                    explanation = "NCLEX NGN menitikberatkan pengujian pada NCJMM untuk mengukur kedalaman keputusan klinis perawat saat kondisi pasien memburuk.";
-                } else {
-                    title = `Scene ${i}: 4 Elemen Malpraktik Keperawatan`;
-                    desc = `Pengadilan menuntut dugaan kelalaian perawat. Elemen mana yang BUKAN bagian dari 4 syarat pembuktian malpraktik?`;
-                    options = [
-                        "Duty of Care & Breach of Duty",
-                        "Causation & Damages",
-                        "Profit Margin Rumah Sakit"
-                    ];
-                    correct = 2;
-                    explanation = "4 Elemen Malpraktik Keperawatan adalah: Duty of Care, Breach of Duty, Causation, dan Damages. Profit margin tidak relevan secara hukum malpraktik.";
-                }
-            } else if(modId === 2) {
-                // Modul 3: Labour Laws & Contracts (51-75)
-                category = "Labour Laws & Contract Audit";
-                if (i % 5 === 1) {
-                    title = `Scene ${i}: Audit Predatory Clawback Clause`;
-                    desc = `Kontrak kerja mencantumkan denda $15.000 FLAT jika Anda resign sebelum 3 tahun, tanpa pengurangan pro-rata. Respon Anda:`;
-                    options = [
-                        "Setuju saja karena yakin tidak akan resign.",
-                        "Minta Addendum kontrak agar denda berbasis pro-rata penyusutan masa kerja & rincian biaya pelatihan nyata.",
-                        "Langsung menandatangani kontrak tanpa membacanya."
-                    ];
-                    correct = 1;
-                    explanation = "Denda kaku bernilai fantastis adalah Predatory Clawback yang dapat menjerat perawat dalam Debt Bondage (jeratan utang).";
-                } else if (i % 5 === 2) {
-                    title = `Scene ${i}: Reformasi Kafala & Penahanan Paspor`;
-                    desc = `HRD RS di Timur Tengah menolak mengembalikan paspor Anda dengan alasan 'keamanan inventaris RS'. Langkah Anda:`;
-                    options = [
-                        "Pasrah karena majikan berhak penuh atas perawat.",
-                        "Tegaskan bahwa penahanan paspor melanggar UU Kerja lokal (Kafala Reform) & ILO, lalu laporkan ke Portal Qiwa/KBRI.",
-                        "Mencuri paspor di brankas pada malam hari."
-                    ];
-                    correct = 1;
-                    explanation = "Reformasi Kafala melarang keras penahanan paspor asli. Ini merupakan pelanggaran berat & indikator kerja paksa (Forced Labour).";
-                } else if (i % 5 === 3) {
-                    title = `Scene ${i}: Curtailment Period Pasca PHK di UK`;
-                    desc = `Anda mengalami PHK sepihak di Inggris. Berapa hari masa tenggang (Curtailment Period) Home Office untuk menemukan sponsor baru?`;
-                    options = [
-                        "14 Hari",
-                        "60 Hari",
-                        "180 Hari"
-                    ];
-                    correct = 1;
-                    explanation = "Home Office memberikan Curtailment Period 60 hari bagi pemegang visa Health and Care Worker untuk mendapat sponsor baru atau pulang.";
-                } else if (i % 5 === 4) {
-                    title = `Scene ${i}: Potongan Gaji Tanpa Persetujuan (Unlawful Wage Deduction)`;
-                    desc = `Gaji bersih (Net Pay) Anda dipotong 20% secara sepihak untuk biaya seragam dan administrasi internal tanpa persetujuan tertulis.`;
-                    options = [
-                        "Dibiarkan saja agar suasana kerja tetap harmonis.",
-                        "Protes tertulis karena pemotongan gaji tanpa persetujuan tertulis/UU resmi bersifat ilegal (Unlawful Wage Deduction).",
-                        "Meminta tambahan lembur secara ilegal."
-                    ];
-                    correct = 1;
-                    explanation = "Hukum kerja internasional melarang pemotongan gaji tanpa dasar undang-undang atau persetujuan tertulis resmi dari pekerja.";
-                } else {
-                    title = `Scene ${i}: Hak Spousal Work Permit untuk Dependents`;
-                    desc = `Pasangan Anda ikut ke luar negeri menggunakan Dependent Visa. Apa hak kerja yang dimiliki oleh pasangan Anda?`;
-                    options = [
-                        "Pasangan dilarang bekerja di sektor apapun.",
-                        "Pasangan berhak atas Spousal Work Permit penuh tanpa batasan sektor industri.",
-                        "Pasangan hanya boleh bekerja di rumah sakit yang sama."
-                    ];
-                    correct = 1;
-                    explanation = "Pemegang Dependent Visa dari perawat resmi umumnya memperoleh hak Spousal Work Permit penuh di negara tujuan.";
-                }
-            } else {
-                // Modul 4: Risk Mitigation & Safety (76-100)
-                category = "Risk Mitigation & Diplomatic Safeguards";
-                if (i % 5 === 1) {
-                    title = `Scene ${i}: Pelaporan Melalui Whistleblowing Channel`;
-                    desc = `Anda menemukan manipulasi rekam medis masif di RS. Bagaimana cara melaporkan insiden ini secara aman dari pembalasan?`;
-                    options = [
-                        "Posting kronologi lengkap di media sosial pribadi.",
-                        "Gunakan saluran resmi Freedom to Speak Up Guardian / Komite Etik RS yang dilindungi Undang-Undang Whistleblower.",
-                        "Mengirim pesan kaleng ke direktur utama."
-                    ];
-                    correct = 1;
-                    explanation = "Whistleblower Protection Act melindungi perawat dari pemecatan balasan (retaliation) jika melapor melalui jalur internal resmi.";
-                } else if (i % 5 === 2) {
-                    title = `Scene ${i}: Indikator Utama TPPO (Forced Labour)`;
-                    desc = `Manakah dari opsi berikut yang merupakan gabungan 3 indikator utama TPPO/Kerja Paksa menurut ILO?`;
-                    options = [
-                        "Gaji ditransfer tepat waktu, ada asuransi, ada cuti.",
-                        "Penahanan paspor, pembatasan komunikasi/kebebasan, dan penagihan utang fiktif.",
-                        "Ujian lisensi ketat, jam kerja 37.5 jam, ada serikat kerja."
-                    ];
-                    correct = 1;
-                    explanation = "Menurut ILO, penyitaan dokumen identitas, pembatasan gerak, dan jeratan utang fiktif adalah kriteria utama TPPO.";
-                } else if (i % 5 === 3) {
-                    title = `Scene ${i}: Akses Perlindungan Diplomatik (SPLP)`;
-                    desc = `Paspor Anda dihilangkan majikan secara sengaja dan Anda diancam deportasi. Dokumen darurat apa yang diterbitkan KBRI/KJRI?`;
-                    options = [
-                        "Visa Turis Darurat",
-                        "Surat Perjalanan Laksana Paspor (SPLP)",
-                        "Kartu Tanda Penduduk Luar Negeri"
-                    ];
-                    correct = 1;
-                    explanation = "KBRI/KJRI berwenang menerbitkan SPLP sebagai dokumen keabsahan identitas pengganti paspor untuk pemulangan WNI.";
-                } else if (i % 5 === 4) {
-                    title = `Scene ${i}: Digital Safeguards Sebelum Keberangkatan`;
-                    desc = `Langkah digital safeguard terbaik untuk mengamankan identitas diri sebelum terbang ke negara tujuan adalah:`;
-                    options = [
-                        "Menghapus seluruh file dari smartphone.",
-                        "Mengunggah scan dokumen penting ke Cloud Storage pribadi dan mendaftar di portal Lapor Diri Kemlu.",
-                        "Memberikan kata sandi email ke pihak agensi."
-                    ];
-                    correct = 1;
-                    explanation = "Penyimpanan cadangan cloud & pendaftaran Lapor Diri Kemlu (peduliwni) menjamin perlindungan konsuler cepat saat darurat.";
-                } else {
-                    title = `Scene ${i}: Penerapan Cultural Safety & Anti-Bias`;
-                    desc = `Pasien dari latar belakang budaya berbeda menolak prosedur tertentu. Sikap Anda sesuai prinsip Cultural Safety adalah:`;
-                    options = [
-                        "Memaksa pasien menuruti aturan medis tanpa peduli budayanya.",
-                        "Menghormati identitas budaya pasien, berkomunikasi secara asertif, dan mencari solusi perawatan yang aman dan adaptif.",
-                        "Acuh tak acuh dan meninggalkan pasien."
-                    ];
-                    correct = 1;
-                    explanation = "Cultural Safety mewajibkan pelayanan keperawatan yang menghormati latar belakang dan identitas budaya tanpa diskriminasi atau bias.";
-                }
+            ];
+
+            for (let i = 1; i <= TOTAL_NODES; i++) {
+                const domIdx = Math.floor((i - 1) / 25);
+                const template = templates[(i - 1) % templates.length];
+                
+                matrixNodes.push({
+                    id: i,
+                    domain: domIdx,
+                    title: `Node #${String(i).padStart(3, '0')}: ${template.title}`,
+                    desc: template.desc,
+                    options: template.options,
+                    rationale: template.rationale
+                });
             }
+        }
 
-            matrixBank.push({
-                id: i,
-                modTitle: modTitle,
-                category: category,
-                title: title,
-                desc: desc,
-                options: options,
-                correct: correct,
-                explanation: explanation
+        // Render Hex Grid Matrix (10x10 Matrix)
+        function renderHexGrid() {
+            const container = document.getElementById('hex-grid-container');
+            container.innerHTML = '';
+
+            matrixNodes.forEach((node, idx) => {
+                const dom = DOMAINS[node.domain];
+                const record = nodeRecords[idx];
+                
+                const btn = document.createElement('button');
+                btn.id = `hex-node-${idx}`;
+                btn.onclick = () => selectNode(idx);
+                
+                // Color and status state
+                let statusClasses = "bg-slate-950 border border-slate-800 text-slate-400";
+                let iconClass = "fa-layer-group";
+
+                if (idx === activeNodeIndex) {
+                    statusClasses = "bg-blue-600 border-2 border-blue-400 text-white shadow-lg active-glow z-10";
+                    iconClass = "fa-crosshairs";
+                } else if (record) {
+                    if (record.isCorrect) {
+                        statusClasses = "bg-emerald-600/90 border border-emerald-400 text-white";
+                        iconClass = "fa-check";
+                    } else {
+                        statusClasses = "bg-rose-700/90 border border-rose-400 text-white";
+                        iconClass = "fa-triangle-exclamation";
+                    }
+                } else {
+                    // Domain accent highlights for unvisited nodes
+                    if (dom.id === 1) statusClasses += " hover:border-emerald-500/50";
+                    if (dom.id === 2) statusClasses += " hover:border-indigo-500/50";
+                    if (dom.id === 3) statusClasses += " hover:border-amber-500/50";
+                    if (dom.id === 4) statusClasses += " hover:border-rose-500/50";
+                }
+
+                btn.className = `hex-node h-12 w-12 flex flex-col items-center justify-center font-bold text-[11px] font-mono cursor-pointer ${statusClasses}`;
+                btn.innerHTML = `
+                    <i class="fa-solid ${iconClass} text-[9px] mb-0.5 opacity-80"></i>
+                    <span>${node.id}</span>
+                `;
+                
+                container.appendChild(btn);
             });
         }
 
-        // Initialize Matrix Grid Buttons
-        function buildMatrixGrid() {
-            const gridContainer = document.getElementById('matrix-grid');
-            gridContainer.innerHTML = '';
+        // Update active UI elements for selected node
+        function selectNode(index) {
+            activeNodeIndex = index;
+            const node = matrixNodes[index];
+            const dom = DOMAINS[node.domain];
+            const record = nodeRecords[index];
 
-            for (let i = 0; i < totalScenesCount; i++) {
-                const btn = document.createElement('button');
-                btn.id = `grid-btn-${i}`;
-                btn.innerText = i + 1;
-                btn.className = `h-9 w-full rounded-lg font-bold text-xs transition border flex items-center justify-center ${getGridBtnStyle(i)}`;
-                btn.onclick = () => selectScene(i);
-                gridContainer.appendChild(btn);
-            }
-        }
+            // Update Metadata Header
+            document.getElementById('node-id-badge').innerText = `NODE #${String(node.id).padStart(3, '0')}`;
+            document.getElementById('domain-badge').innerText = `Domain ${dom.id}: ${dom.title}`;
+            document.getElementById('domain-badge').className = `text-xs font-semibold px-3 py-1 rounded-lg border ${dom.bg} ${dom.border} ${dom.text}`;
+            
+            document.getElementById('scenario-title').innerText = node.title;
+            document.getElementById('scenario-description').innerText = node.desc;
 
-        function getGridBtnStyle(index) {
-            if (index === currentSceneIndex) {
-                return 'bg-blue-600 border-blue-400 text-white shadow-md ring-2 ring-blue-400/50';
-            }
-            const record = userAnswers[index];
-            if (record) {
-                return record.isCorrect 
-                    ? 'bg-emerald-950/80 border-emerald-600 text-emerald-300' 
-                    : 'bg-rose-950/80 border-rose-600 text-rose-300';
-            }
-            return 'bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-white';
-        }
+            // Render Tactical Option Buttons
+            const optionsWrapper = document.getElementById('options-wrapper');
+            optionsWrapper.innerHTML = '';
 
-        function updateGridStyles() {
-            for (let i = 0; i < totalScenesCount; i++) {
-                const btn = document.getElementById(`grid-btn-${i}`);
-                if (btn) {
-                    btn.className = `h-9 w-full rounded-lg font-bold text-xs transition border flex items-center justify-center ${getGridBtnStyle(i)}`;
-                }
-            }
-        }
-
-        // Load Active Scene Content
-        function loadScene(index) {
-            currentSceneIndex = index;
-            const data = matrixBank[index];
-
-            document.getElementById('scene-badge').innerText = `SCENE ${data.id} / 100`;
-            document.getElementById('module-badge').innerText = data.modTitle;
-            document.getElementById('category-tag').innerText = `Domain: ${data.category}`;
-            document.getElementById('scene-title').innerText = data.title;
-            document.getElementById('scene-description').innerText = data.desc;
-
-            // Render Options
-            const optionsContainer = document.getElementById('options-container');
-            optionsContainer.innerHTML = '';
-
-            const record = userAnswers[index];
-
-            data.options.forEach((optText, optIdx) => {
+            node.options.forEach((opt, optIdx) => {
                 const optBtn = document.createElement('button');
-                optBtn.className = `w-full text-left p-4 rounded-xl border text-sm font-semibold transition flex items-start gap-3 ${
-                    record ? 'cursor-default' : 'hover:bg-slate-800 hover:border-slate-700'
+                optBtn.className = `w-full text-left p-3.5 rounded-2xl border text-xs md:text-sm font-semibold transition flex items-start gap-3 relative ${
+                    record ? 'cursor-default opacity-90' : 'hover:bg-slate-800 hover:border-slate-700 bg-slate-950/80 border-slate-800 text-slate-200'
                 }`;
 
                 if (record) {
-                    if (optIdx === data.correct) {
-                        optBtn.classList.add('bg-emerald-950/70', 'border-emerald-500', 'text-emerald-200');
-                    } else if (record.chosen === optIdx && !record.isCorrect) {
-                        optBtn.classList.add('bg-rose-950/70', 'border-rose-500', 'text-rose-200');
+                    if (opt.correct) {
+                        optBtn.className += ' bg-emerald-950/80 border-emerald-500 text-emerald-200';
+                    } else if (record.chosenOpt === optIdx && !record.isCorrect) {
+                        optBtn.className += ' bg-rose-950/80 border-rose-500 text-rose-200';
                     } else {
-                        optBtn.classList.add('bg-slate-950/40', 'border-slate-800', 'text-slate-500');
+                        optBtn.className += ' bg-slate-950/40 border-slate-900 text-slate-500';
                     }
                 } else {
-                    optBtn.classList.add('bg-slate-950', 'border-slate-800', 'text-slate-200');
-                    optBtn.onclick = () => makeChoice(index, optIdx);
+                    optBtn.onclick = () => executeStrategy(index, optIdx);
                 }
 
                 const prefix = String.fromCharCode(65 + optIdx);
                 optBtn.innerHTML = `
-                    <span class="w-6 h-6 rounded-lg bg-slate-800 border border-slate-700 text-xs flex items-center justify-center font-bold text-slate-300 flex-shrink-0 mt-0.5">
+                    <span class="w-6 h-6 rounded-xl bg-slate-800 border border-slate-700 text-xs flex items-center justify-center font-bold text-slate-300 flex-shrink-0 mt-0.5">
                         ${prefix}
                     </span>
-                    <span class="flex-1">${optText}</span>
+                    <span class="flex-1 leading-snug">${opt.text}</span>
                 `;
-                optionsContainer.appendChild(optBtn);
+                optionsWrapper.appendChild(optBtn);
             });
 
-            // Feedback Display
-            const feedbackBox = document.getElementById('feedback-box');
+            // Feedback & Rationales Banner
+            const banner = document.getElementById('feedback-banner');
             if (record) {
-                feedbackBox.classList.remove('hidden', 'bg-emerald-950/80', 'border-emerald-700', 'text-emerald-200', 'bg-rose-950/80', 'border-rose-700', 'text-rose-200');
+                banner.classList.remove('hidden', 'bg-emerald-950/80', 'border-emerald-600', 'text-emerald-200', 'bg-rose-950/80', 'border-rose-600', 'text-rose-200');
                 const icon = document.getElementById('feedback-icon');
-                
+
                 if (record.isCorrect) {
-                    feedbackBox.classList.add('bg-emerald-950/80', 'border-emerald-700', 'text-emerald-200');
-                    icon.className = 'fa-solid fa-circle-check text-emerald-400 text-xl mt-0.5';
-                    document.getElementById('feedback-text').innerHTML = `
-                        <strong class="block text-emerald-300 mb-1">Pilihan Tepat (+200 Poin)</strong>
-                        ${data.explanation}
-                    `;
+                    banner.classList.add('bg-emerald-950/80', 'border-emerald-600', 'text-emerald-200');
+                    icon.className = 'fa-solid fa-circle-check text-emerald-400 text-xl';
+                    document.getElementById('feedback-title').innerText = "Optimal Strategy Executed (+200 Points)";
                 } else {
-                    feedbackBox.classList.add('bg-rose-950/80', 'border-rose-700', 'text-rose-200');
-                    icon.className = 'fa-solid fa-circle-xmark text-rose-400 text-xl mt-0.5';
-                    document.getElementById('feedback-text').innerHTML = `
-                        <strong class="block text-rose-300 mb-1">Keputusan Keliru (-100 Poin)</strong>
-                        ${data.explanation}
-                    `;
+                    banner.classList.add('bg-rose-950/80', 'border-rose-600', 'text-rose-200');
+                    icon.className = 'fa-solid fa-triangle-exclamation text-rose-400 text-xl';
+                    document.getElementById('feedback-title').innerText = "Compliance / Ethical Violation (-100 Points)";
                 }
+                document.getElementById('feedback-body').innerText = node.rationale;
             } else {
-                feedbackBox.classList.add('hidden');
+                banner.classList.add('hidden');
             }
 
-            // Controls State
-            document.getElementById('prev-btn').disabled = (index === 0);
-            document.getElementById('next-btn').disabled = (index === totalScenesCount - 1);
+            // Button state navigation
+            document.getElementById('btn-prev').disabled = (index === 0);
+            document.getElementById('btn-next').disabled = (index === TOTAL_NODES - 1);
 
-            updateGridStyles();
+            renderHexGrid();
         }
 
-        // Handle User Choice Action
-        function makeChoice(sceneIdx, chosenOptIdx) {
-            if (userAnswers[sceneIdx] !== null) return; // already answered
+        // Execute Strategy Option Choice
+        function executeStrategy(nodeIdx, optIdx) {
+            if (nodeRecords[nodeIdx] !== null) return;
 
-            const data = matrixBank[sceneIdx];
-            const isCorrect = (chosenOptIdx === data.correct);
-            const scoreDelta = isCorrect ? 200 : -100;
+            const node = matrixNodes[nodeIdx];
+            const option = node.options[optIdx];
+            const isCorrect = option.correct;
+            const delta = isCorrect ? 200 : -100;
 
-            userAnswers[sceneIdx] = {
-                chosen: chosenOptIdx,
+            // Resource Impact Adjustments
+            if (option.impact) {
+                if (option.impact.ethics) resources.ethics = Math.min(100, Math.max(0, resources.ethics + option.impact.ethics));
+                if (option.impact.legal) resources.legal = Math.min(100, Math.max(0, resources.legal + option.impact.legal));
+                if (option.impact.credential) resources.credential = Math.min(100, Math.max(0, resources.credential + option.impact.credential));
+            }
+
+            nodeRecords[nodeIdx] = {
+                chosenOpt: optIdx,
                 isCorrect: isCorrect,
-                scoreDelta: scoreDelta
+                delta: delta
             };
 
-            // Play Audio Effect
+            // Play Web Audio Sound FX
             if (isCorrect) {
-                AudioFX.playSuccess();
+                SoundEngine.playCelebration();
             } else {
-                AudioFX.playBadBAM();
+                SoundEngine.playBadBAM();
             }
 
-            calculateScore();
-            loadScene(sceneIdx);
+            calculateMetrics();
+            selectNode(nodeIdx);
         }
 
-        // Score & Percentage Calculator Engine
-        function calculateScore() {
-            let totalScore = 0;
-            let answeredCount = 0;
+        // Metrics & Accuracy Engine
+        function calculateMetrics() {
+            let totalPoints = 0;
+            let answered = 0;
+            let correctCount = 0;
 
-            userAnswers.forEach(ans => {
-                if (ans !== null) {
-                    totalScore += ans.scoreDelta;
-                    answeredCount++;
+            nodeRecords.forEach(rec => {
+                if (rec !== null) {
+                    totalPoints += rec.delta;
+                    answered++;
+                    if (rec.isCorrect) correctCount++;
                 }
             });
 
-            // Prevent negative score floor
-            score = Math.max(0, totalScore);
+            score = Math.max(0, totalPoints);
+            completedCount = answered;
 
-            // Calculation Logic: 100 scenes x 200 max pts = 20,000 Max Score
-            const maxPossibleScore = totalScenesCount * 200; 
-            const percentage = ((score / maxPossibleScore) * 100).toFixed(1);
+            const accuracy = answered > 0 ? ((correctCount / answered) * 100).toFixed(0) : 100;
 
             document.getElementById('score-display').innerText = score.toLocaleString();
-            document.getElementById('percentage-display').innerText = `${percentage}%`;
-            document.getElementById('progress-display').innerText = `${answeredCount} / ${totalScenesCount}`;
+            document.getElementById('accuracy-display').innerText = `${accuracy}%`;
+            document.getElementById('progress-text').innerText = completedCount;
+
+            // Resource UI bars update
+            document.getElementById('ethics-bar').style.width = `${resources.ethics}%`;
+            document.getElementById('legal-bar').style.width = `${resources.legal}%`;
+            document.getElementById('credential-bar').style.width = `${resources.credential}%`;
         }
 
-        // Navigation Controls
-        function selectScene(index) {
-            loadScene(index);
-        }
-
-        function navigateScene(direction) {
-            const newIndex = currentSceneIndex + direction;
-            if (newIndex >= 0 && newIndex < totalScenesCount) {
-                loadScene(newIndex);
+        function navigateNode(direction) {
+            const nextIdx = activeNodeIndex + direction;
+            if (nextIdx >= 0 && nextIdx < TOTAL_NODES) {
+                selectNode(nextIdx);
             }
         }
 
-        // Start Game
+        function jumpToNextPending() {
+            const pendingIndex = nodeRecords.findIndex((rec, idx) => rec === null && idx >= activeNodeIndex);
+            if (pendingIndex !== -1) {
+                selectNode(pendingIndex);
+            } else {
+                const firstPending = nodeRecords.findIndex(rec => rec === null);
+                if (firstPending !== -1) selectNode(firstPending);
+            }
+        }
+
+        // Initialize Game Canvas
         window.onload = () => {
-            buildMatrixGrid();
-            loadScene(0);
+            generate100Nodes();
+            selectNode(0);
         };
     </script>
 </body>
 </html>
 ```eof
 
-### Fitur Utamanya:
-- **100 Scene Lengkap & Variatif:** Terbagi rata ke 4 Modul (WHO Ethics, Credentialing & Licensing, Contract & Labour Laws, TPPO & Safeguards).
-- **Efek Audio Sintetis Interaktif:** Tanpa butuh file mp3 eksternal, memanfaatkan Web Audio API browser untuk menghasilkan efek suara *Celebration* (nada arpeggio ceria) dan suara *BAD/BAM* (nada disonan tebal).
-- **Aturan Skor & Kalkulasi:** 
-  - Kesuksesan / Jawaban Benar = **+200 Poin**
-  - Kekeliruan / Jawaban Salah = **-100 Poin**
-  - Kalkulasi Persentase Real-time berbasis $\text{Skor Maksimal} = 20.000\text{ Poin}$.
+### Key Highlights:
+1. **Interactive Strategy Grid (100 Nodes):** Map showcasing 100 hex nodes across 4 domains.
+2. **Web Audio API Engine:** Triggers synthesized celebration chimes for optimal strategic choices (+200 pts) and low-frequency "BAM" sounds for violations (-100 pts).
+3. **Resource Management:** Dashboard tracking **Ethics Shield, Legal Compliance, and Credential Power** levels.
+4. **Scoring & Progress:** Real-time scoring, percentage accuracy, and progression tracking.
 
-File di atas berbentuk single-file HTML yang bisa langsung dibuka di browser apa saja tanpa instalasi tambahan!
+Would you like to adjust resource decay rates or expand specific scenarios within any domain?
